@@ -12,7 +12,7 @@ export function loadConfig() {
         BOT_NAME: process.env.BOT_NAME || 'BOT',
 
         // Database
-        PG_URL: process.env.PG_URL || 'postgres://postgres:sidhu123@localhost:5432/connect4',
+        PG_URL: process.env.PG_URL || 'postgresql://connect4_h3ct_user:bTE68HWYbntk96xxPN0D4ygMkBMRBPEs@dpg-d3r66j0dl3ps73cepfjg-a/connect4_h3ct',
 
         // Kafka (if used)
         KAFKA_ENABLED: process.env.KAFKA_ENABLED === 'true',

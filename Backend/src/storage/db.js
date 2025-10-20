@@ -1,59 +1,71 @@
+import pkg from 'pg';
+const { Pool } = pkg;
 
-import { Pool } from 'pg';
+// ✅ Use environment variable if available, else fallback to your Render connection string
+const PG_URL =
+  process.env.PG_URL ||
+  'postgresql://connect4_h3ct_user:bTE68HWYbntk96xxPN0D4ygMkBMRBPEs@dpg-d3r66j0dl3ps73cepfjg-a/connect4_h3ct?ssl=true';
 
-const PG_URL = process.env.PG_URL || 'postgres://postgres:sidhu123@localhost:5432/connect4';
-console.log('[DB] PG_URL:', PG_URL);
+console.log('[DB] Using PG_URL:', PG_URL);
 
+// ✅ Enable SSL when connecting to Render (it requires it)
+const useSSL = PG_URL.includes('render.com') || PG_URL.includes('dpg-');
+
+// ✅ Create a connection pool
 export const pool = new Pool({
   connectionString: PG_URL,
+  ssl: useSSL ? { rejectUnauthorized: false } : false,
   max: parseInt(process.env.PG_POOL_MAX || '10', 10),
   idleTimeoutMillis: parseInt(process.env.PG_IDLE_MS || '30000', 10),
   connectionTimeoutMillis: parseInt(process.env.PG_CONN_MS || '5000', 10),
 });
 
+// ✅ Initialize database schema if it doesn’t exist
 export async function initSchema() {
-  console.log('[DB] initSchema...');
+  console.log('[DB] Initializing schema...');
   const sql = `
-  create table if not exists players (
-    username text primary key,
-    wins int not null default 0,
-    losses int not null default 0,
-    draws int not null default 0,
-    created_at timestamptz not null default now()
+  CREATE TABLE IF NOT EXISTS players (
+    username TEXT PRIMARY KEY,
+    wins INT NOT NULL DEFAULT 0,
+    losses INT NOT NULL DEFAULT 0,
+    draws INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
 
-  create table if not exists games (
-    id uuid primary key,
-    player_x text not null references players(username) on delete restrict,
-    player_o text not null,
-    winner text,
-    reason text not null,
-    started_at timestamptz not null default now(),
-    finished_at timestamptz
+  CREATE TABLE IF NOT EXISTS games (
+    id UUID PRIMARY KEY,
+    player_x TEXT NOT NULL REFERENCES players(username) ON DELETE RESTRICT,
+    player_o TEXT NOT NULL,
+    winner TEXT,
+    reason TEXT NOT NULL,
+    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    finished_at TIMESTAMPTZ
   );
 
-  create table if not exists moves (
-    game_id uuid not null references games(id) on delete cascade,
-    ply int not null,
-    player text not null,
-    col int not null,
-    played_at timestamptz not null default now(),
-    primary key (game_id, ply)
+  CREATE TABLE IF NOT EXISTS moves (
+    game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+    ply INT NOT NULL,
+    player TEXT NOT NULL,
+    col INT NOT NULL,
+    played_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (game_id, ply)
   );
 
-  create index if not exists idx_games_started_at on games(started_at desc);
-  create index if not exists idx_games_winner on games(winner);
+  CREATE INDEX IF NOT EXISTS idx_games_started_at ON games(started_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_games_winner ON games(winner);
   `;
+
   try {
     await pool.query(sql);
-    console.log('[DB] schema ok');
-  } catch (e) {
-    console.error('[DB] schema error', e);
-    throw e;
+    console.log('[DB] Schema initialized successfully');
+  } catch (error) {
+    console.error('[DB] Schema initialization failed:', error);
+    throw error;
   }
 }
 
+// ✅ Generic query helper
 export async function query(text, params) {
-  console.log('[DB] query:', (text || '').trim().split('\n')[0], 'params:', params);
+  console.log('[DB] Query:', (text || '').trim().split('\n')[0], 'Params:', params);
   return pool.query(text, params);
 }
