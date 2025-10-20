@@ -141,13 +141,16 @@ export default function App() {
       <h2>4 in a Row</h2>
 
       {/* ⚠️ Warning Disclaimer - using CSS classes */}
-      <div className="board-disclaimer">
-        <span className="disclaimer-icon">⚠️</span>
-        <span className="disclaimer-text">
-          <strong>Important:</strong> Do not refresh the page during the game!
-          If disconnected, you have 30 seconds to rejoin or you'll forfeit.
-        </span>
-      </div>
+      {/* ⚠️ Warning Disclaimer - only show when game is active */}
+      {username && isGameActive && !game.finished && (
+        <div className="board-disclaimer">
+          <span className="disclaimer-icon">⚠️</span>
+          <span className="disclaimer-text">
+            <strong>Important:</strong> Do not refresh the page during the game!
+            If disconnected, you have 30 seconds to rejoin or you'll forfeit.
+          </span>
+        </div>
+      )}
 
       {!username && <Login onJoin={setUsername} />}
 
