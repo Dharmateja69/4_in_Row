@@ -12,6 +12,19 @@ export default function Board({ board, onDropCell, disabled }) {
 
   return (
     <div className="board">
+      {/* ✅ Title and Disclaimer */}
+      <div className="board-header">
+        <h3 className="board-title">🎮 Game Board</h3>
+        <div className="board-disclaimer">
+          <span className="disclaimer-icon">⚠️</span>
+          <span className="disclaimer-text">
+            <strong>Important:</strong> Do not refresh the page during the game!
+            If disconnected, you have 30 seconds to rejoin or you'll forfeit.
+          </span>
+        </div>
+      </div>
+
+      {/* ✅ Game Grid */}
       <div className="grid" role="grid" aria-label="game board">
         {Array.from({ length: rows }).map((_, r) => (
           <div key={`row-${r}`} className="row" role="row">
