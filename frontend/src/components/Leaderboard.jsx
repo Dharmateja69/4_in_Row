@@ -29,6 +29,24 @@ export default function Leaderboard() {
     };
   }, []);
 
+  // ✅ Calculate win rate
+  const calculateWinRate = (row) => {
+    const totalGames =
+      row.total_games || row.wins + row.losses + (row.draws || 0);
+
+    // If no games played, return 0%
+    if (totalGames === 0) return "0.0";
+
+    // If win_rate exists from backend, use it
+    if (row.win_rate !== null && row.win_rate !== undefined) {
+      return row.win_rate.toFixed(1);
+    }
+
+    // Calculate from wins/total
+    const winRate = (row.wins / totalGames) * 100;
+    return winRate.toFixed(1);
+  };
+
   return (
     <div className="leaderboard-container">
       <div className="card">
@@ -60,24 +78,30 @@ export default function Leaderboard() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r, idx) => (
-                <tr key={r.username}>
-                  <td className="rank-column">{idx + 1}</td>
-                  <td>{r.username}</td>
-                  <td style={{ textAlign: "center" }}>
-                    {r.total_games || r.wins + r.losses + (r.draws || 0)}
-                  </td>
-                  <td style={{ textAlign: "center", color: "var(--success)" }}>
-                    {r.wins}
-                  </td>
-                  <td style={{ textAlign: "center", color: "var(--danger)" }}>
-                    {r.losses}
-                  </td>
-                  <td className="win-rate" style={{ textAlign: "center" }}>
-                    {r.win_rate ? `${r.win_rate.toFixed(1)}%` : "0%"}
-                  </td>
-                </tr>
-              ))}
+              {rows.map((r, idx) => {
+                const totalGames =
+                  r.total_games || r.wins + r.losses + (r.draws || 0);
+                const winRate = calculateWinRate(r);
+
+                return (
+                  <tr key={r.username}>
+                    <td className="rank-column">{idx + 1}</td>
+                    <td>{r.username}</td>
+                    <td style={{ textAlign: "center" }}>{totalGames}</td>
+                    <td
+                      style={{ textAlign: "center", color: "var(--success)" }}
+                    >
+                      {r.wins || 0}
+                    </td>
+                    <td style={{ textAlign: "center", color: "var(--danger)" }}>
+                      {r.losses || 0}
+                    </td>
+                    <td className="win-rate" style={{ textAlign: "center" }}>
+                      {winRate}%
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}
