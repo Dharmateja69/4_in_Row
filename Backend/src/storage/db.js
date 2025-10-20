@@ -14,11 +14,15 @@ const useSSL = PG_URL.includes('render.com') || PG_URL.includes('dpg-');
 // ✅ Create a connection pool
 export const pool = new Pool({
   connectionString: PG_URL,
-  ssl: useSSL ? { rejectUnauthorized: false } : false,
+  ssl: {
+    require: true,
+    rejectUnauthorized: false, // ✅ this line allows Render’s self-signed SSL cert
+  },
   max: parseInt(process.env.PG_POOL_MAX || '10', 10),
   idleTimeoutMillis: parseInt(process.env.PG_IDLE_MS || '30000', 10),
   connectionTimeoutMillis: parseInt(process.env.PG_CONN_MS || '5000', 10),
 });
+
 
 // ✅ Initialize database schema if it doesn’t exist
 export async function initSchema() {
