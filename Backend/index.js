@@ -1,4 +1,4 @@
-// index.js — ensure schema, add process-level guards to avoid crash loops
+// index.js — fixed healthz endpoint and process-level guards
 import cors from 'cors';
 import express from 'express';
 import http from 'http';
@@ -10,6 +10,7 @@ import { initWebSocket } from './src/ws.js';
 process.on('unhandledRejection', (reason) => {
     console.error('[SRV] unhandledRejection', reason);
 });
+
 process.on('uncaughtException', (err) => {
     console.error('[SRV] uncaughtException', err);
 });
@@ -20,16 +21,27 @@ process.on('uncaughtException', (err) => {
 
     const app = express();
     app.use(express.json());
-    app.use(cors({ origin: 'http://localhost:5173' }));
+    app.use(cors({
+        origin: [
+            'https://four-in-row-2.onrender.com',  // Your frontend URL
+            'http://localhost:5173',                // Local development
+            'http://localhost:3000'                 // Local development alternative
+        ],
+        credentials: true
+    }));
 
+    // ✅ Health endpoints
     app.get('/health', (_req, res) => {
         console.log('[SRV] /health');
         res.json({ ok: true });
     });
-    app.get('/healthz'), (_req, res) => {
+
+    app.get('/healthz', (_req, res) => {
         console.log('[SRV] /healthz');
-        res.send('ok');
-    }
+        res.status(200).send('OK'); // Render requires HTTP 200
+    });
+
+    // Leaderboard route
     app.get('/api/leaderboard', async (_req, res) => {
         console.log('[SRV] GET /api/leaderboard');
         try {
@@ -42,6 +54,7 @@ process.on('uncaughtException', (err) => {
         }
     });
 
+    // Initialize DB schema
     try {
         await initSchema();
         console.log('[SRV] schema initialized');
@@ -49,6 +62,7 @@ process.on('uncaughtException', (err) => {
         console.error('[SRV] schema init failed', e);
     }
 
+    // HTTP + WebSocket server
     const server = http.createServer(app);
     initWebSocket(server, cfg);
 
@@ -56,6 +70,7 @@ process.on('uncaughtException', (err) => {
         console.log(`[SRV] listening on :${cfg.PORT}`);
     });
 
+    // Graceful shutdown
     const stop = async () => {
         console.log('[SRV] shutting down...');
         server.close(() => process.exit(0));

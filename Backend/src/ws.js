@@ -41,6 +41,9 @@ export function initWebSocket(server, cfg) {
                     if (rejoined) {
                         ws.gameId = gameId;
                         return;
+                    } else {
+                        // Tell client rejoin failed so frontend can clear localStorage
+                        send(ws, { type: "rejoinFailed" });
                     }
                 }
 

@@ -160,20 +160,30 @@ export function useC4Socket({ wsUrl, username }) {
         }
 
         // --- PLAYER DISCONNECTED ---
+        // --- PLAYER DISCONNECTED ---
         if (type === "playerDisconnected") {
-            const { disconnectedPlayer, timeoutMs } = payload ?? rest;
+            const { disconnectedPlayer, timeoutMs, gameId: disconnectGameId } = payload ?? rest;
 
             if (disconnectedPlayer === username) {
+                // I disconnected - start my own forfeit countdown
                 if (forfeitTimeoutRef.current) clearTimeout(forfeitTimeoutRef.current);
                 forfeitTimeoutRef.current = setTimeout(() => {
+                    console.log("[FE][WS] I forfeited due to timeout");
                     clearGameState();
                     setStatusMessage("⚠️ Connection lost - Game forfeited. Please login to start a new game.");
                 }, timeoutMs);
             } else {
+                // Opponent disconnected - show timer
                 const start = Date.now();
-                setOpponentStatus({ text: `${disconnectedPlayer} disconnected`, timeoutMs, start, remainingMs: timeoutMs });
+                setOpponentStatus({
+                    text: `${disconnectedPlayer} disconnected`,
+                    timeoutMs,
+                    start,
+                    remainingMs: timeoutMs
+                });
 
                 if (disconnectTimer.current) clearInterval(disconnectTimer.current);
+
                 disconnectTimer.current = setInterval(() => {
                     setOpponentStatus((prev) => {
                         if (!prev) {
@@ -183,9 +193,21 @@ export function useC4Socket({ wsUrl, username }) {
                         }
                         const elapsed = Date.now() - prev.start;
                         const remaining = Math.max(0, prev.timeoutMs - elapsed);
+
                         if (remaining <= 0) {
+                            // ✅ TIMER HIT ZERO - Mark game as finished locally
+                            console.log("[FE][WS] Opponent forfeit timeout reached - awaiting server confirmation");
                             clearInterval(disconnectTimer.current);
                             disconnectTimer.current = null;
+
+                            // Set game as finished optimistically
+                            setGame((g) => {
+                                if (g && !g.finished) {
+                                    return { ...g, finished: true, winner: username, reason: "forfeit_timeout" };
+                                }
+                                return g;
+                            });
+
                             return { ...prev, expired: true, remainingMs: 0 };
                         }
                         return { ...prev, remainingMs: remaining };
@@ -193,6 +215,7 @@ export function useC4Socket({ wsUrl, username }) {
                 }, 250);
             }
         }
+
 
         // --- GAME FORFEITED BY TIMEOUT ---
         if (type === "gameForfeitedByTimeout") {

@@ -6,7 +6,7 @@ export function loadConfig() {
         HEARTBEAT_MS: parseInt(process.env.HEARTBEAT_MS || '30000', 10),
 
         // Bot strength and UX
-        BOT_DEPTH: parseInt(process.env.BOT_DEPTH || '5', 10),        // search depth (REDUCED from 12)
+        BOT_DEPTH: parseInt(process.env.BOT_DEPTH || '7', 10),        // search depth (REDUCED from 12)
         BOT_TIME_MS: parseInt(process.env.BOT_TIME_MS || '2500', 10), // per-move time budget
         BOT_THINK_MS: parseInt(process.env.BOT_THINK_MS || '500', 10), // delay to feel natural
         BOT_NAME: process.env.BOT_NAME || 'BOT',
