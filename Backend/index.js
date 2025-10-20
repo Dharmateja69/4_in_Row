@@ -21,7 +21,14 @@ process.on('uncaughtException', (err) => {
 
     const app = express();
     app.use(express.json());
-    app.use(cors({ origin: 'http://localhost:5173' }));
+    app.use(cors({
+        origin: [
+            'https://four-in-row-2.onrender.com',  // Your frontend URL
+            'http://localhost:5173',                // Local development
+            'http://localhost:3000'                 // Local development alternative
+        ],
+        credentials: true
+    }));
 
     // ✅ Health endpoints
     app.get('/health', (_req, res) => {
