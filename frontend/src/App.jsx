@@ -140,24 +140,12 @@ export default function App() {
     <div className="container">
       <h2>4 in a Row</h2>
 
-      {/* ⚠️ Warning message added below the title */}
-      <div
-        className="board-disclaimer"
-        style={{
-          background: "#fff3cd",
-          padding: "8px 12px",
-          borderRadius: "6px",
-          marginBottom: "12px",
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          border: "1px solid #ffeeba",
-        }}
-      >
-        <span style={{ fontSize: "18px" }}>⚠️</span>
-        <span>
-          <strong>Important:</strong> Do not refresh the page! If disconnected,
-          you have 30 seconds to rejoin.
+      {/* ⚠️ Warning Disclaimer - using CSS classes */}
+      <div className="board-disclaimer">
+        <span className="disclaimer-icon">⚠️</span>
+        <span className="disclaimer-text">
+          <strong>Important:</strong> Do not refresh the page during the game!
+          If disconnected, you have 30 seconds to rejoin or you'll forfeit.
         </span>
       </div>
 
