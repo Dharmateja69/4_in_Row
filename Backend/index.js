@@ -26,7 +26,10 @@ process.on('uncaughtException', (err) => {
         console.log('[SRV] /health');
         res.json({ ok: true });
     });
-
+    app.get('/healthz'), (_req, res) => {
+        console.log('[SRV] /healthz');
+        res.send('ok');
+    }
     app.get('/api/leaderboard', async (_req, res) => {
         console.log('[SRV] GET /api/leaderboard');
         try {
