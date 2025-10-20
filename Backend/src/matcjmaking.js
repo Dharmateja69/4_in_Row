@@ -227,35 +227,55 @@ export const matchmaking = {
             disconnectTimers.delete(key);
         }
 
+        // ✅ NEW TIMEOUT LOGIC APPLIED HERE
         const timer = setTimeout(async () => {
             const game = games.get(gameId);
-            if (!game || game.state.finished) {
-                console.log(`[MM] Game ${gameId} already finished or removed`);
+
+            console.log(`[MM] ⏰ Timeout fired for ${username} in game ${gameId}`);
+
+            if (!game) {
+                console.log(`[MM] Game ${gameId} not found - already removed`);
                 disconnectTimers.delete(key);
                 disconnectTimestamps.delete(key);
                 return;
             }
 
-            const stillDisconnected = !game.state.connectedPlayers.includes(username);
-            if (stillDisconnected) {
-                console.log(`[MM] ⏰ FORFEIT TIMEOUT: ${username} in ${gameId}`);
+            if (game.state.finished) {
+                console.log(`[MM] Game ${gameId} already finished`);
+                disconnectTimers.delete(key);
+                disconnectTimestamps.delete(key);
+                return;
+            }
+
+            const stillHasTimestamp = disconnectTimestamps.has(key);
+
+            if (stillHasTimestamp) {
+                console.log(`[MM] ⏰ EXECUTING FORFEIT: ${username} in ${gameId} - timestamp still exists`);
 
                 const res = game.resign(username);
                 if (res.ok) {
                     await finishAndPersist(game, res.state.winner, "forfeit_timeout", ctx);
 
-                    game.broadcast({
-                        type: "gameForfeitedByTimeout",
-                        gameId,
-                        forfeitedPlayer: username,
-                        winner: res.state.winner,
+                    const participants = [game.state.seats.X, game.state.seats.O];
+                    participants.forEach(p => {
+                        if (p && p !== game.state.botName) {
+                            sendToUser(ctx.clients, p, {
+                                type: "gameForfeitedByTimeout",
+                                gameId,
+                                forfeitedPlayer: username,
+                                winner: res.state.winner,
+                            });
+                        }
                     });
                 }
+            } else {
+                console.log(`[MM] ${username} rejoined in time - cancelling forfeit`);
             }
 
             disconnectTimers.delete(key);
             disconnectTimestamps.delete(key);
         }, 30000);
+
 
         disconnectTimers.set(key, timer);
     },
